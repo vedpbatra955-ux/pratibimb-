@@ -64,7 +64,7 @@ def generate_production_launch_book(pdf_path):
         
     progress_bar.empty()
     
-    # --- HTML: TOUCH RESPONSIVE LAUNCH, MOBILE ENGINE & NATIVE AUDIO ---
+    # --- HTML: TOUCH RESPONSIVE LAUNCH & FAIL-SAFE AUDIO ENGINE ---
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -106,16 +106,14 @@ def generate_production_launch_book(pdf_path):
                 transition: opacity 1.5s ease-in-out;
             }}
             .launch-logo {{
-                width: 120px;
-                margin-bottom: 20px;
+                width: 120px; margin-bottom: 20px;
                 filter: drop-shadow(0px 4px 10px rgba(212, 175, 55, 0.4));
             }}
             .launch-title {{
                 color: #d4af37; font-size: clamp(2rem, 5vw, 3.5rem);
                 text-transform: uppercase; letter-spacing: 4px;
                 margin-bottom: 10px; text-align: center;
-                text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.4);
-                margin-top: 0;
+                text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.4); margin-top: 0;
             }}
             .launch-subtitle {{
                 color: #ffffff; font-size: clamp(1rem, 3vw, 1.5rem);
@@ -151,14 +149,28 @@ def generate_production_launch_book(pdf_path):
                 position: absolute; bottom: 30px; color: #888;
                 font-size: clamp(0.8rem, 2vw, 1.2rem); letter-spacing: 2px; text-align: center; padding: 0 10px;
             }}
+
+            /* --- AUDIO CONTROL BUTTON --- */
+            #audio-control {{
+                position: fixed; top: 20px; right: 20px;
+                background: rgba(0, 0, 0, 0.7); color: #d4af37;
+                border: 1px solid #d4af37; padding: 10px 20px;
+                border-radius: 30px; font-size: 1rem; cursor: pointer;
+                z-index: 100000; display: none; backdrop-filter: blur(5px);
+                transition: all 0.3s ease; font-family: sans-serif;
+            }}
+            #audio-control:hover {{ background: rgba(212, 175, 55, 0.2); }}
+            .pulse-glow {{ animation: glow 1.5s infinite alternate; }}
+            @keyframes glow {{
+                from {{ box-shadow: 0 0 5px rgba(212, 175, 55, 0.2); }}
+                to {{ box-shadow: 0 0 20px rgba(212, 175, 55, 0.9); }}
+            }}
         </style>
     </head>
     <body>
         
-        <!-- NATIVE HTML5 AUDIO ELEMENT (Crash-Proof for Browsers) -->
-        <audio id="bhartiya-sangeet" loop preload="auto" crossorigin="anonymous">
-            <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/7/74/Sitar_and_Tabla.ogg/Sitar_and_Tabla.ogg.mp3" type="audio/mpeg">
-        </audio>
+        <!-- Elegant Manual Audio Override Button -->
+        <button id="audio-control">🔇 Play Sangeet</button>
 
         <div id="launch-overlay">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" class="launch-logo" alt="State Emblem of India">
@@ -181,6 +193,7 @@ def generate_production_launch_book(pdf_path):
         <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 
+                // 1. MOBILE RESPONSIVE ENGINE
                 setTimeout(() => {{
                     const ratio = {ratio}; 
                     let screenW = window.innerWidth * 0.95;
@@ -209,12 +222,37 @@ def generate_production_launch_book(pdf_path):
                     }});
                     pageFlip.loadFromHTML(document.querySelectorAll('.page'));
                     
+                    // Allow arrow keys for reading, bypassing Streamlit's iframe blocks
                     document.addEventListener('keydown', (e) => {{
                         if (e.key === 'ArrowRight') pageFlip.flipNext();
                         if (e.key === 'ArrowLeft') pageFlip.flipPrev();
                     }});
                 }}, 300);
 
+                // 2. AUDIO ENGINE & FAIL-SAFE
+                const sangeet = new Audio("https://upload.wikimedia.org/wikipedia/commons/7/74/Sitar_and_Tabla.ogg");
+                sangeet.loop = true;
+                sangeet.volume = 0.5;
+                let isPlaying = false;
+                
+                const audioBtn = document.getElementById('audio-control');
+                
+                // Manual Play/Pause logic
+                audioBtn.addEventListener('click', () => {{
+                    if (isPlaying) {{
+                        sangeet.pause();
+                        audioBtn.innerHTML = "🔇 Play Sangeet";
+                        audioBtn.classList.remove('pulse-glow');
+                        isPlaying = false;
+                    }} else {{
+                        sangeet.play();
+                        audioBtn.innerHTML = "🔊 Mute Sangeet";
+                        audioBtn.classList.remove('pulse-glow');
+                        isPlaying = true;
+                    }}
+                }});
+
+                // 3. TOUCH & MOUSE RIBBON CUTTING
                 const ribbonBox = document.getElementById('ribbon-box');
                 const scissors = document.getElementById('scissors');
                 const overlay = document.getElementById('launch-overlay');
@@ -243,13 +281,20 @@ def generate_production_launch_book(pdf_path):
                     if(isCut) return;
                     isCut = true;
                     
-                    // --- TRIGGER THE NATIVE HTML AUDIO ---
-                    const sangeet = document.getElementById('bhartiya-sangeet');
-                    sangeet.volume = 0.6;
+                    // TRIGGER AUDIO ON CLICK
                     let playPromise = sangeet.play();
                     if (playPromise !== undefined) {{
-                        playPromise.catch(error => {{
-                            console.log("Audio playback prevented by strict browser policies: ", error);
+                        playPromise.then(() => {{
+                            // Browser allowed autoplay
+                            isPlaying = true;
+                            audioBtn.innerHTML = "🔊 Mute Sangeet";
+                            audioBtn.style.display = 'block';
+                        }}).catch(error => {{
+                            // Browser blocked autoplay due to security. Show glowing manual button.
+                            console.log("Audio blocked by browser. Displaying manual override.");
+                            audioBtn.innerHTML = "🔇 Play Sangeet";
+                            audioBtn.classList.add('pulse-glow');
+                            audioBtn.style.display = 'block';
                         }});
                     }}
                     
