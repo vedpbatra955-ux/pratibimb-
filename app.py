@@ -54,25 +54,24 @@ def fetch_sangeet_audio():
     return audio_url
 
 @st.cache_data
-def fetch_sketch_image():
-    # Reads the local PNG parliament image
-    local_sketch_path = "parliament_sketch.png"
-    if os.path.exists(local_sketch_path):
+def fetch_logo_image():
+    # Reads the local PNG logo image
+    local_logo_path = "rs_text.png"
+    if os.path.exists(local_logo_path):
         try:
-            with open(local_sketch_path, "rb") as f:
+            with open(local_logo_path, "rb") as f:
                 encoded_img = base64.b64encode(f.read()).decode("utf-8")
             return f"data:image/png;base64,{encoded_img}"
         except Exception as e:
             print(f"चित्र पढ़ने में त्रुटि: {e}")
     return ""
 
-def generate_production_launch_book(pdf_path, audio_src, sketch_src):
+def generate_production_launch_book(pdf_path, audio_src, logo_src):
     doc = pymupdf.open(pdf_path)
     total_pages = len(doc)
     page0 = doc.load_page(0)
     ratio = page0.rect.height / page0.rect.width
     
-    # Memory optimization
     if total_pages > 100:
         mat = pymupdf.Matrix(0.9, 0.9)
         jpg_qual = 55
@@ -107,9 +106,9 @@ def generate_production_launch_book(pdf_path, audio_src, sketch_src):
     
     # Fallback default emblem just in case the PNG is missing
     fallback_img = "https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
-    actual_img_src = sketch_src if sketch_src else fallback_img
+    actual_img_src = logo_src if logo_src else fallback_img
     
-    # --- HTML: PURE EMBEDDED ASSETS & TOUCH RESPONSIVE ENGINE ---
+    # --- HTML: PURE EMBEDDED ASSETS & DYNAMIC LAYOUT ---
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -143,47 +142,47 @@ def generate_production_launch_book(pdf_path, audio_src, sketch_src):
             .page-cover {{ background-color: #111; border: 1px solid #333; }}
             .page-cover::after {{ display: none; }}
 
-            /* --- LAUNCH STAGE WITH RAJYA SABHA MAROON BACKGROUND --- */
+            /* --- FIXED RESPONSIVE LAYOUT (No more overlapping) --- */
             #launch-overlay {{
                 position: absolute; top: 0; left: 0; width: 100%; height: 100%;
                 background: radial-gradient(circle, #7e191b 0%, #3a0809 100%); 
                 z-index: 9999; display: flex; flex-direction: column;
                 justify-content: center; align-items: center;
                 transition: opacity 1.5s ease-in-out;
+                padding: 10px; box-sizing: border-box;
             }}
             
-            /* --- PNG IMAGE STYLING --- */
+            /* --- LOGO SIZING FIX --- */
             .launch-logo {{
-                width: clamp(250px, 40vw, 450px);
-                margin-bottom: 30px;
-                /* Soft golden drop-shadow to match the interface */
+                max-width: 90vw;
+                max-height: 22vh; /* Prevents image from becoming huge on fallback */
+                width: auto; height: auto;
+                margin-bottom: 2vh;
                 filter: drop-shadow(0px 4px 15px rgba(212, 175, 55, 0.4));
             }}
             
-            /* --- HUGE TITLE FONT --- */
             .launch-title {{
                 color: #d4af37; 
-                font-size: clamp(3.5rem, 8vw, 5.5rem);
+                font-size: clamp(3rem, 7vw, 5rem);
                 font-weight: 800;
                 letter-spacing: 4px;
-                margin-bottom: 10px; text-align: center;
+                margin-bottom: 1vh; text-align: center;
                 text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.5); margin-top: 0;
             }}
             .launch-subtitle {{
-                color: #ffffff; font-size: clamp(1.2rem, 4vw, 1.8rem);
-                margin-bottom: 40px; text-align: center; font-weight: 300;
+                color: #ffffff; font-size: clamp(1.2rem, 3vw, 1.8rem);
+                margin-bottom: 4vh; text-align: center; font-weight: 300;
                 letter-spacing: 2px;
             }}
             
             .ribbon-container {{
-                position: relative; width: 100%; height: 120px;
+                position: relative; width: 100%; height: 80px;
                 display: flex; justify-content: center; align-items: center;
-                cursor: none; 
+                cursor: none; margin-bottom: 4vh;
             }}
             
-            /* --- GOLDEN RIBBON --- */
             .ribbon-half {{
-                width: 50%; height: 80px;
+                width: 50%; height: 70px;
                 background: linear-gradient(to bottom, #fceabb, #f8b500, #b27300);
                 box-shadow: 0 10px 20px rgba(0,0,0,0.5);
                 transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
@@ -193,7 +192,7 @@ def generate_production_launch_book(pdf_path, audio_src, sketch_src):
             .ribbon-right {{ border-left: 3px dashed #ffffff; justify-content: flex-start; }}
             
             #scissors {{
-                position: absolute; font-size: 5rem;
+                position: absolute; font-size: 4rem;
                 pointer-events: none; transition: transform 0.1s;
                 z-index: 10000; text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
             }}
@@ -201,11 +200,11 @@ def generate_production_launch_book(pdf_path, audio_src, sketch_src):
             .cut-left {{ transform: translateX(-100vw); }}
             .cut-right {{ transform: translateX(100vw); }}
             
-            /* --- GOLDEN & LARGE FOOTER --- */
+            /* --- FOOTER POSITION FIX --- */
             .launch-footer {{
-                position: absolute; bottom: 40px; 
+                position: relative; /* Now part of the flow, will never overlap */
                 color: #FFD700; 
-                font-size: clamp(1.2rem, 3.5vw, 1.8rem); 
+                font-size: clamp(1rem, 2.5vw, 1.5rem); 
                 font-weight: 600;
                 letter-spacing: 2px; text-align: center; padding: 0 15px;
                 text-shadow: 0px 3px 10px rgba(0,0,0,0.8);
@@ -219,8 +218,7 @@ def generate_production_launch_book(pdf_path, audio_src, sketch_src):
         </audio>
 
         <div id="launch-overlay">
-            <!-- Parliament Image -->
-            <img src="{actual_img_src}" class="launch-logo" alt="Parliament PNG">
+            <img src="{actual_img_src}" class="launch-logo" alt="RS Logo">
             
             <h1 class="launch-title">लोकार्पण</h1>
             <div class="launch-subtitle">नूतन प्रतिबिंब 2026</div>
@@ -354,8 +352,8 @@ if not st.session_state.reader_active:
             with st.spinner("लॉन्च स्क्रीन और एसेट्स तैयार किए जा रहे हैं..."):
                 try:
                     audio_source = fetch_sangeet_audio()
-                    sketch_source = fetch_sketch_image()
-                    st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source, sketch_source)
+                    logo_source = fetch_logo_image()
+                    st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source, logo_source)
                     st.session_state.reader_active = True
                     st.rerun()
                 except Exception as e:
@@ -366,8 +364,8 @@ if not st.session_state.reader_active:
             with st.spinner("ऑफ़लाइन फ़ाइल बनाई जा रही है..."):
                 try:
                     audio_source = fetch_sangeet_audio()
-                    sketch_source = fetch_sketch_image()
-                    st.session_state.offline_html = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source, sketch_source)
+                    logo_source = fetch_logo_image()
+                    st.session_state.offline_html = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source, logo_source)
                     st.success("✅ ऑफ़लाइन ई-बुक तैयार है! नीचे दिए गए बटन से डाउनलोड करें।")
                 except Exception as e:
                     st.error(f"दस्तावेज़ लोड करने में विफल। त्रुटि: {e}")
