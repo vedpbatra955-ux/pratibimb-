@@ -27,7 +27,6 @@ if 'html_content' not in st.session_state:
     st.session_state.html_content = ""
 
 def generate_production_launch_book(pdf_path):
-    # Open the PDF directly from the GitHub server folder
     doc = pymupdf.open(pdf_path)
     total_pages = len(doc)
     page0 = doc.load_page(0)
@@ -65,7 +64,7 @@ def generate_production_launch_book(pdf_path):
         
     progress_bar.empty()
     
-    # --- HTML: TOUCH RESPONSIVE LAUNCH & MOBILE ENGINE ---
+    # --- HTML: TOUCH RESPONSIVE LAUNCH, MOBILE ENGINE & AUDIO ---
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -106,15 +105,21 @@ def generate_production_launch_book(pdf_path):
                 justify-content: center; align-items: center;
                 transition: opacity 1.5s ease-in-out;
             }}
+            .launch-logo {{
+                width: 120px;
+                margin-bottom: 20px;
+                filter: drop-shadow(0px 4px 10px rgba(212, 175, 55, 0.4));
+            }}
             .launch-title {{
                 color: #d4af37; font-size: clamp(2rem, 5vw, 3.5rem);
                 text-transform: uppercase; letter-spacing: 4px;
                 margin-bottom: 10px; text-align: center;
                 text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.4);
+                margin-top: 0;
             }}
             .launch-subtitle {{
                 color: #ffffff; font-size: clamp(1rem, 3vw, 1.5rem);
-                margin-bottom: 60px; text-align: center; font-weight: 300;
+                margin-bottom: 40px; text-align: center; font-weight: 300;
             }}
             
             .ribbon-container {{
@@ -150,7 +155,15 @@ def generate_production_launch_book(pdf_path):
     </head>
     <body>
         
+        <!-- AUDIO TRACK (Public domain Sitar & Tabla) -->
+        <audio id="bhartiya-sangeet" loop preload="auto">
+            <source src="https://upload.wikimedia.org/wikipedia/commons/7/74/Sitar_and_Tabla.ogg" type="audio/ogg">
+        </audio>
+
         <div id="launch-overlay">
+            <!-- PARLIAMENT OF INDIA EMBLEM -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" class="launch-logo" alt="State Emblem of India">
+            
             <h1 class="launch-title">Official Launch</h1>
             <div class="launch-subtitle">Nutan Pratibimb 2026</div>
             <div class="ribbon-container" id="ribbon-box">
@@ -232,6 +245,13 @@ def generate_production_launch_book(pdf_path):
                     if(isCut) return;
                     isCut = true;
                     
+                    // TRIGGER INDIAN CLASSICAL MUSIC
+                    const sangeet = document.getElementById('bhartiya-sangeet');
+                    if (sangeet) {{
+                        sangeet.volume = 0.6; // 60% volume for background reading
+                        sangeet.play().catch(e => console.log("Audio playback blocked by browser policies: ", e));
+                    }}
+                    
                     scissors.classList.add('snip');
                     
                     setTimeout(() => {{
@@ -277,7 +297,6 @@ if not st.session_state.reader_active:
         if st.button("🚀 INITIATE LAUNCH SEQUENCE", type="primary", use_container_width=True):
             with st.spinner("Preparing official launch environment..."):
                 try:
-                    # Hardcoded to read the PDF directly from your GitHub repository folder
                     st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf")
                     st.session_state.reader_active = True
                     st.rerun()
@@ -286,3 +305,10 @@ if not st.session_state.reader_active:
 
 else:
     components.html(st.session_state.html_content, width=None, height=900, scrolling=False)
+    
+    col1, col2, col3 = st.columns([2, 1, 2])
+    with col2:
+        if st.button("❌ End Session", use_container_width=True):
+            st.session_state.reader_active = False
+            st.session_state.html_content = ""
+            st.rerun()
