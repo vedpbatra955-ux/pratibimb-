@@ -64,7 +64,7 @@ def generate_production_launch_book(pdf_path):
         
     progress_bar.empty()
     
-    # --- HTML: TOUCH RESPONSIVE LAUNCH, MOBILE ENGINE & AUDIO ---
+    # --- HTML: TOUCH RESPONSIVE LAUNCH, MOBILE ENGINE & UNLOCKED AUDIO ---
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -154,14 +154,8 @@ def generate_production_launch_book(pdf_path):
         </style>
     </head>
     <body>
-        
-        <!-- AUDIO TRACK (Public domain Sitar & Tabla) -->
-        <audio id="bhartiya-sangeet" loop preload="auto">
-            <source src="https://upload.wikimedia.org/wikipedia/commons/7/74/Sitar_and_Tabla.ogg" type="audio/ogg">
-        </audio>
 
         <div id="launch-overlay">
-            <!-- PARLIAMENT OF INDIA EMBLEM -->
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" class="launch-logo" alt="State Emblem of India">
             
             <h1 class="launch-title">Official Launch</h1>
@@ -183,6 +177,30 @@ def generate_production_launch_book(pdf_path):
         <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 
+                // --- 1. JAVASCRIPT AUDIO ENGINE (CRASH-PROOF MP3) ---
+                // Using Wikipedia's universal MP3 transcode to ensure it plays on iPhones, iPads, and Safari
+                const sangeet = new Audio("https://upload.wikimedia.org/wikipedia/commons/transcoded/7/74/Sitar_and_Tabla.ogg/Sitar_and_Tabla.ogg.mp3");
+                sangeet.volume = 0.6;
+                sangeet.loop = true;
+                let audioUnlocked = false;
+
+                // The "Unlock Trick": Forces strict browsers to allow audio upon the very first screen tap
+                function unlockAudio() {{
+                    if (!audioUnlocked) {{
+                        sangeet.play().then(() => {{
+                            sangeet.pause();
+                            sangeet.currentTime = 0;
+                            audioUnlocked = true;
+                        }}).catch(e => console.log("Audio unlock waiting for primary interaction..."));
+                        document.removeEventListener('touchstart', unlockAudio);
+                        document.removeEventListener('mousedown', unlockAudio);
+                    }}
+                }}
+                document.addEventListener('touchstart', unlockAudio);
+                document.addEventListener('mousedown', unlockAudio);
+
+
+                // --- 2. MOBILE RESPONSIVE 3D ENGINE ---
                 setTimeout(() => {{
                     const ratio = {ratio}; 
                     let screenW = window.innerWidth * 0.95;
@@ -217,6 +235,7 @@ def generate_production_launch_book(pdf_path):
                     }});
                 }}, 300);
 
+                // --- 3. TOUCH & MOUSE RIBBON CUTTING ---
                 const ribbonBox = document.getElementById('ribbon-box');
                 const scissors = document.getElementById('scissors');
                 const overlay = document.getElementById('launch-overlay');
@@ -245,12 +264,8 @@ def generate_production_launch_book(pdf_path):
                     if(isCut) return;
                     isCut = true;
                     
-                    // TRIGGER INDIAN CLASSICAL MUSIC
-                    const sangeet = document.getElementById('bhartiya-sangeet');
-                    if (sangeet) {{
-                        sangeet.volume = 0.6; // 60% volume for background reading
-                        sangeet.play().catch(e => console.log("Audio playback blocked by browser policies: ", e));
-                    }}
+                    // Trigger the unlocked Indian Classical Music
+                    sangeet.play().catch(e => console.log("Final playback blocked by strict browser policy: ", e));
                     
                     scissors.classList.add('snip');
                     
