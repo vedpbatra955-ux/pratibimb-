@@ -306,8 +306,9 @@ def generate_production_launch_book(pdf_path, audio_src):
 
 # --- Main Interface ---
 if not st.session_state.reader_active:
-    st.markdown("<br><br><br><h1 style='text-align: center; font-size: clamp(2rem, 4vw, 3.5rem);'>🏛️ Virtual Inauguration Platform</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #888;'>Official Launch of Nutan Pratibimb 2026</p><br>", unsafe_allow_html=True)
+    # Text updated to Hindi as requested
+    st.markdown("<br><br><br><h1 style='text-align: center; font-size: clamp(2rem, 4vw, 3.5rem);'>🏛️ राज्य सभा सचिवालय</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #888;'>नूतन प्रतिबिंब 2026 का आधिकारिक लॉन्च</p><br>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
