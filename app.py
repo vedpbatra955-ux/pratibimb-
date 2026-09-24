@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pymupdf
 import base64
+import requests
 import os
 
 # --- 1. Cross-Device Screen Optimization ---
@@ -26,12 +27,30 @@ if 'reader_active' not in st.session_state:
 if 'html_content' not in st.session_state:
     st.session_state.html_content = ""
 
-def generate_production_launch_book(pdf_path):
+# Cache the audio download so the app remains fast on subsequent loads
+@st.cache_data
+def fetch_sangeet_audio():
+    audio_url = "https://upload.wikimedia.org/wikipedia/commons/transcoded/7/74/Sitar_and_Tabla.ogg/Sitar_and_Tabla.ogg.mp3"
+    try:
+        # Download the audio file directly into the server's memory
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(audio_url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            # Convert the raw MP3 into a Base64 string to embed directly into HTML
+            encoded_audio = base64.b64encode(response.content).decode("utf-8")
+            return f"data:audio/mpeg;base64,{encoded_audio}"
+    except Exception as e:
+        print(f"Failed to fetch audio locally: {e}")
+    # Fallback to standard URL if download fails
+    return audio_url
+
+def generate_production_launch_book(pdf_path, audio_src):
     doc = pymupdf.open(pdf_path)
     total_pages = len(doc)
     page0 = doc.load_page(0)
     ratio = page0.rect.height / page0.rect.width
     
+    # Memory optimization
     if total_pages > 100:
         mat = pymupdf.Matrix(0.9, 0.9)
         jpg_qual = 55
@@ -43,7 +62,7 @@ def generate_production_launch_book(pdf_path):
         jpg_qual = 80
         
     images_html = ""
-    progress_bar = st.progress(0, text=f"Preparing secure launch environment for {total_pages} pages...")
+    progress_bar = st.progress(0, text=f"Rendering {total_pages} pages for virtual inauguration...")
     
     for page_num in range(total_pages):
         page = doc.load_page(page_num)
@@ -64,7 +83,7 @@ def generate_production_launch_book(pdf_path):
         
     progress_bar.empty()
     
-    # --- HTML: TOUCH RESPONSIVE LAUNCH & FAIL-SAFE AUDIO ENGINE ---
+    # --- HTML: PURE EMBEDDED AUDIO & TOUCH RESPONSIVE ENGINE ---
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -149,28 +168,14 @@ def generate_production_launch_book(pdf_path):
                 position: absolute; bottom: 30px; color: #888;
                 font-size: clamp(0.8rem, 2vw, 1.2rem); letter-spacing: 2px; text-align: center; padding: 0 10px;
             }}
-
-            /* --- AUDIO CONTROL BUTTON --- */
-            #audio-control {{
-                position: fixed; top: 20px; right: 20px;
-                background: rgba(0, 0, 0, 0.7); color: #d4af37;
-                border: 1px solid #d4af37; padding: 10px 20px;
-                border-radius: 30px; font-size: 1rem; cursor: pointer;
-                z-index: 100000; display: none; backdrop-filter: blur(5px);
-                transition: all 0.3s ease; font-family: sans-serif;
-            }}
-            #audio-control:hover {{ background: rgba(212, 175, 55, 0.2); }}
-            .pulse-glow {{ animation: glow 1.5s infinite alternate; }}
-            @keyframes glow {{
-                from {{ box-shadow: 0 0 5px rgba(212, 175, 55, 0.2); }}
-                to {{ box-shadow: 0 0 20px rgba(212, 175, 55, 0.9); }}
-            }}
         </style>
     </head>
     <body>
         
-        <!-- Elegant Manual Audio Override Button -->
-        <button id="audio-control">🔇 Play Sangeet</button>
+        <!-- FULLY EMBEDDED AUDIO (Bypasses Browser Network Restrictions) -->
+        <audio id="bhartiya-sangeet" loop preload="auto">
+            <source src="{audio_src}" type="audio/mpeg">
+        </audio>
 
         <div id="launch-overlay">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" class="launch-logo" alt="State Emblem of India">
@@ -222,37 +227,13 @@ def generate_production_launch_book(pdf_path):
                     }});
                     pageFlip.loadFromHTML(document.querySelectorAll('.page'));
                     
-                    // Allow arrow keys for reading, bypassing Streamlit's iframe blocks
                     document.addEventListener('keydown', (e) => {{
                         if (e.key === 'ArrowRight') pageFlip.flipNext();
                         if (e.key === 'ArrowLeft') pageFlip.flipPrev();
                     }});
                 }}, 300);
 
-                // 2. AUDIO ENGINE & FAIL-SAFE
-                const sangeet = new Audio("https://upload.wikimedia.org/wikipedia/commons/7/74/Sitar_and_Tabla.ogg");
-                sangeet.loop = true;
-                sangeet.volume = 0.5;
-                let isPlaying = false;
-                
-                const audioBtn = document.getElementById('audio-control');
-                
-                // Manual Play/Pause logic
-                audioBtn.addEventListener('click', () => {{
-                    if (isPlaying) {{
-                        sangeet.pause();
-                        audioBtn.innerHTML = "🔇 Play Sangeet";
-                        audioBtn.classList.remove('pulse-glow');
-                        isPlaying = false;
-                    }} else {{
-                        sangeet.play();
-                        audioBtn.innerHTML = "🔊 Mute Sangeet";
-                        audioBtn.classList.remove('pulse-glow');
-                        isPlaying = true;
-                    }}
-                }});
-
-                // 3. TOUCH & MOUSE RIBBON CUTTING
+                // 2. TOUCH & MOUSE RIBBON CUTTING
                 const ribbonBox = document.getElementById('ribbon-box');
                 const scissors = document.getElementById('scissors');
                 const overlay = document.getElementById('launch-overlay');
@@ -277,26 +258,15 @@ def generate_production_launch_book(pdf_path):
                 ribbonBox.addEventListener('touchmove', moveScissors);
                 ribbonBox.addEventListener('touchstart', moveScissors);
 
-                function cutRibbon() {{
+                function cutRibbon(e) {{
                     if(isCut) return;
                     isCut = true;
                     
-                    // TRIGGER AUDIO ON CLICK
-                    let playPromise = sangeet.play();
-                    if (playPromise !== undefined) {{
-                        playPromise.then(() => {{
-                            // Browser allowed autoplay
-                            isPlaying = true;
-                            audioBtn.innerHTML = "🔊 Mute Sangeet";
-                            audioBtn.style.display = 'block';
-                        }}).catch(error => {{
-                            // Browser blocked autoplay due to security. Show glowing manual button.
-                            console.log("Audio blocked by browser. Displaying manual override.");
-                            audioBtn.innerHTML = "🔇 Play Sangeet";
-                            audioBtn.classList.add('pulse-glow');
-                            audioBtn.style.display = 'block';
-                        }});
-                    }}
+                    // --- TRIGGER THE AUDIO SYNCHRONOUSLY ---
+                    // By executing this instantly upon the click gesture, browsers guarantee playback
+                    const sangeet = document.getElementById('bhartiya-sangeet');
+                    sangeet.volume = 0.6;
+                    sangeet.play().catch(err => console.error("Audio playback error:", err));
                     
                     scissors.classList.add('snip');
                     
@@ -324,6 +294,7 @@ def generate_production_launch_book(pdf_path):
                     }}, 1500);
                 }}
 
+                // Bind to explicit user gestures
                 ribbonBox.addEventListener('click', cutRibbon);
                 ribbonBox.addEventListener('touchend', cutRibbon);
             }});
@@ -341,9 +312,12 @@ if not st.session_state.reader_active:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🚀 INITIATE LAUNCH SEQUENCE", type="primary", use_container_width=True):
-            with st.spinner("Preparing official launch environment..."):
+            with st.spinner("Preparing official launch environment and downloading Sangeet..."):
                 try:
-                    st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf")
+                    # 1. Fetch the audio first
+                    audio_source = fetch_sangeet_audio()
+                    # 2. Inject it into the book
+                    st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source)
                     st.session_state.reader_active = True
                     st.rerun()
                 except Exception as e:
@@ -351,3 +325,10 @@ if not st.session_state.reader_active:
 
 else:
     components.html(st.session_state.html_content, width=None, height=900, scrolling=False)
+    
+    col1, col2, col3 = st.columns([2, 1, 2])
+    with col2:
+        if st.button("❌ End Session", use_container_width=True):
+            st.session_state.reader_active = False
+            st.session_state.html_content = ""
+            st.rerun()
