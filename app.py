@@ -27,21 +27,30 @@ if 'reader_active' not in st.session_state:
 if 'html_content' not in st.session_state:
     st.session_state.html_content = ""
 
-# Cache the audio download so the app remains fast on subsequent loads
+# --- AUDIO FETCH ENGINE ---
 @st.cache_data
 def fetch_sangeet_audio():
+    # 1. सबसे पहले चेक करें कि क्या यूज़र ने अपना 'sangeet.mp3' (शहनाई/तबला) गिटहब पर अपलोड किया है
+    local_audio_path = "sangeet.mp3"
+    if os.path.exists(local_audio_path):
+        try:
+            with open(local_audio_path, "rb") as f:
+                encoded_audio = base64.b64encode(f.read()).decode("utf-8")
+            return f"data:audio/mpeg;base64,{encoded_audio}"
+        except Exception as e:
+            print(f"लोकल ऑडियो पढ़ने में त्रुटि: {e}")
+            
+    # 2. अगर 'sangeet.mp3' नहीं मिलता है, तो यह बैकअप के तौर पर पुरानी धुन बजाएगा
     audio_url = "https://upload.wikimedia.org/wikipedia/commons/transcoded/7/74/Sitar_and_Tabla.ogg/Sitar_and_Tabla.ogg.mp3"
     try:
-        # Download the audio file directly into the server's memory
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(audio_url, headers=headers, timeout=10)
         if response.status_code == 200:
-            # Convert the raw MP3 into a Base64 string to embed directly into HTML
             encoded_audio = base64.b64encode(response.content).decode("utf-8")
             return f"data:audio/mpeg;base64,{encoded_audio}"
     except Exception as e:
-        print(f"Failed to fetch audio locally: {e}")
-    # Fallback to standard URL if download fails
+        print(f"ऑडियो डाउनलोड करने में विफल: {e}")
+        
     return audio_url
 
 def generate_production_launch_book(pdf_path, audio_src):
@@ -119,7 +128,6 @@ def generate_production_launch_book(pdf_path, audio_src):
             /* --- LAUNCH STAGE WITH RAJYA SABHA MAROON BACKGROUND --- */
             #launch-overlay {{
                 position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                /* Official Maroon Color Gradient */
                 background: radial-gradient(circle, #7e191b 0%, #3a0809 100%); 
                 z-index: 9999; display: flex; flex-direction: column;
                 justify-content: center; align-items: center;
@@ -149,7 +157,6 @@ def generate_production_launch_book(pdf_path, audio_src):
             /* --- GOLDEN RIBBON --- */
             .ribbon-half {{
                 width: 50%; height: 80px;
-                /* Premium Golden Gradient */
                 background: linear-gradient(to bottom, #fceabb, #f8b500, #b27300);
                 box-shadow: 0 10px 20px rgba(0,0,0,0.5);
                 transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
@@ -175,7 +182,7 @@ def generate_production_launch_book(pdf_path, audio_src):
     </head>
     <body>
         
-        <!-- FULLY EMBEDDED AUDIO (Bypasses Browser Network Restrictions) -->
+        <!-- AUDIO ELEMENT (Plays User's MP3 or Fallback) -->
         <audio id="bhartiya-sangeet" loop preload="auto">
             <source src="{audio_src}" type="audio/mpeg">
         </audio>
@@ -314,9 +321,9 @@ if not st.session_state.reader_active:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🚀 INITIATE LAUNCH SEQUENCE", type="primary", use_container_width=True):
-            with st.spinner("लॉन्च स्क्रीन तैयार की जा रही है और संगीत डाउनलोड हो रहा है..."):
+            with st.spinner("लॉन्च स्क्रीन तैयार की जा रही है और संगीत लोड हो रहा है..."):
                 try:
-                    # 1. Fetch the audio first
+                    # 1. Fetch the audio first (checks for local sangeet.mp3)
                     audio_source = fetch_sangeet_audio()
                     # 2. Inject it into the book
                     st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source)
