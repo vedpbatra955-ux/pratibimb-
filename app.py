@@ -29,10 +29,9 @@ if 'html_content' not in st.session_state:
 if 'offline_html' not in st.session_state:
     st.session_state.offline_html = None
 
-# --- AUDIO FETCH ENGINE ---
+# --- ASSET FETCH ENGINES ---
 @st.cache_data
 def fetch_sangeet_audio():
-    # 1. Check for local 'sangeet.mp3' first
     local_audio_path = "sangeet.mp3"
     if os.path.exists(local_audio_path):
         try:
@@ -42,7 +41,6 @@ def fetch_sangeet_audio():
         except Exception as e:
             print(f"लोकल ऑडियो पढ़ने में त्रुटि: {e}")
             
-    # 2. Fallback Audio
     audio_url = "https://upload.wikimedia.org/wikipedia/commons/transcoded/7/74/Sitar_and_Tabla.ogg/Sitar_and_Tabla.ogg.mp3"
     try:
         headers = {'User-Agent': 'Mozilla/5.0'}
@@ -55,7 +53,20 @@ def fetch_sangeet_audio():
         
     return audio_url
 
-def generate_production_launch_book(pdf_path, audio_src):
+@st.cache_data
+def fetch_sketch_image():
+    # Reads the local PNG parliament image
+    local_sketch_path = "parliament_sketch.png"
+    if os.path.exists(local_sketch_path):
+        try:
+            with open(local_sketch_path, "rb") as f:
+                encoded_img = base64.b64encode(f.read()).decode("utf-8")
+            return f"data:image/png;base64,{encoded_img}"
+        except Exception as e:
+            print(f"चित्र पढ़ने में त्रुटि: {e}")
+    return ""
+
+def generate_production_launch_book(pdf_path, audio_src, sketch_src):
     doc = pymupdf.open(pdf_path)
     total_pages = len(doc)
     page0 = doc.load_page(0)
@@ -94,7 +105,11 @@ def generate_production_launch_book(pdf_path, audio_src):
         
     progress_bar.empty()
     
-    # --- HTML: PURE EMBEDDED AUDIO & TOUCH RESPONSIVE ENGINE ---
+    # Fallback default emblem just in case the PNG is missing
+    fallback_img = "https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
+    actual_img_src = sketch_src if sketch_src else fallback_img
+    
+    # --- HTML: PURE EMBEDDED ASSETS & TOUCH RESPONSIVE ENGINE ---
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -137,15 +152,12 @@ def generate_production_launch_book(pdf_path, audio_src):
                 transition: opacity 1.5s ease-in-out;
             }}
             
-            /* --- TEXT REPLACING THE IMAGE --- */
-            .rs-logo-text {{
-                color: #FFD700; 
-                font-size: clamp(2.5rem, 6vw, 4.5rem); 
-                font-weight: 800;
-                margin-bottom: 20px;
-                text-align: center;
-                text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.6);
-                letter-spacing: 3px;
+            /* --- PNG IMAGE STYLING --- */
+            .launch-logo {{
+                width: clamp(250px, 40vw, 450px);
+                margin-bottom: 30px;
+                /* Soft golden drop-shadow to match the interface */
+                filter: drop-shadow(0px 4px 15px rgba(212, 175, 55, 0.4));
             }}
             
             /* --- HUGE TITLE FONT --- */
@@ -207,7 +219,9 @@ def generate_production_launch_book(pdf_path, audio_src):
         </audio>
 
         <div id="launch-overlay">
-            <div class="rs-logo-text">राज्य सभा सचिवालय</div>
+            <!-- Parliament Image -->
+            <img src="{actual_img_src}" class="launch-logo" alt="Parliament PNG">
+            
             <h1 class="launch-title">लोकार्पण</h1>
             <div class="launch-subtitle">नूतन प्रतिबिंब 2026</div>
             <div class="ribbon-container" id="ribbon-box">
@@ -330,17 +344,18 @@ def generate_production_launch_book(pdf_path, audio_src):
 
 # --- Main Interface ---
 if not st.session_state.reader_active:
-    st.markdown("<br><br><br><h1 style='text-align: center; font-size: clamp(2rem, 4vw, 3.5rem);'>🏛️ राज्य सभा सचिवालय</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #888;'>नूतन प्रतिबिंब 2026 का आधिकारिक लोकार्पण</p><br>", unsafe_allow_html=True)
+    st.markdown("<br><br><br><h1 style='text-align: center; font-size: clamp(2rem, 4vw, 3.5rem);'>🏛️ नूतन प्रतिबिंब 2026</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #888;'>आधिकारिक लोकार्पण</p><br>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col1:
         if st.button("🚀 INITIATE ONLINE LAUNCH", type="primary", use_container_width=True):
-            with st.spinner("लॉन्च स्क्रीन तैयार की जा रही है और संगीत लोड हो रहा है..."):
+            with st.spinner("लॉन्च स्क्रीन और एसेट्स तैयार किए जा रहे हैं..."):
                 try:
                     audio_source = fetch_sangeet_audio()
-                    st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source)
+                    sketch_source = fetch_sketch_image()
+                    st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source, sketch_source)
                     st.session_state.reader_active = True
                     st.rerun()
                 except Exception as e:
@@ -348,15 +363,15 @@ if not st.session_state.reader_active:
                     
     with col3:
         if st.button("⚙️ GENERATE OFFLINE E-BOOK", use_container_width=True):
-            with st.spinner("ऑफ़लाइन फ़ाइल बनाई जा रही है (कृपया प्रतीक्षा करें)..."):
+            with st.spinner("ऑफ़लाइन फ़ाइल बनाई जा रही है..."):
                 try:
                     audio_source = fetch_sangeet_audio()
-                    st.session_state.offline_html = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source)
+                    sketch_source = fetch_sketch_image()
+                    st.session_state.offline_html = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source, sketch_source)
                     st.success("✅ ऑफ़लाइन ई-बुक तैयार है! नीचे दिए गए बटन से डाउनलोड करें।")
                 except Exception as e:
                     st.error(f"दस्तावेज़ लोड करने में विफल। त्रुटि: {e}")
 
-    # Show Download Button once generated
     if st.session_state.offline_html:
         st.write("---")
         col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
