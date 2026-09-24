@@ -134,19 +134,21 @@ def generate_production_launch_book(pdf_path, audio_src):
                 transition: opacity 1.5s ease-in-out;
             }}
             
-            /* --- NEW PARLIAMENT IMAGE --- */
-            .launch-logo {{
-                width: 280px; 
-                margin-bottom: 25px;
-                border-radius: 12px;
-                border: 3px solid #d4af37; /* Golden border to frame the building */
-                box-shadow: 0px 10px 30px rgba(0,0,0,0.6);
+            /* --- TEXT REPLACING THE IMAGE --- */
+            .rs-logo-text {{
+                color: #FFD700; 
+                font-size: clamp(2.5rem, 6vw, 4.5rem); 
+                font-weight: 800;
+                margin-bottom: 20px;
+                text-align: center;
+                text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.6);
+                letter-spacing: 3px;
             }}
             
             /* --- HUGE TITLE FONT --- */
             .launch-title {{
                 color: #d4af37; 
-                font-size: clamp(3.5rem, 8vw, 5.5rem); /* Massively increased size */
+                font-size: clamp(3.5rem, 8vw, 5.5rem);
                 font-weight: 800;
                 letter-spacing: 4px;
                 margin-bottom: 10px; text-align: center;
@@ -164,7 +166,7 @@ def generate_production_launch_book(pdf_path, audio_src):
                 cursor: none; 
             }}
             
-            /* --- GOLDEN RIBBON --- */
+            /* --- GOLDEN RIB ক্রিম (RIBBON) --- */
             .ribbon-half {{
                 width: 50%; height: 80px;
                 background: linear-gradient(to bottom, #fceabb, #f8b500, #b27300);
@@ -187,8 +189,8 @@ def generate_production_launch_book(pdf_path, audio_src):
             /* --- GOLDEN & LARGE FOOTER --- */
             .launch-footer {{
                 position: absolute; bottom: 40px; 
-                color: #FFD700; /* Bright Golden Color */
-                font-size: clamp(1.2rem, 3.5vw, 1.8rem); /* Increased size */
+                color: #FFD700; 
+                font-size: clamp(1.2rem, 3.5vw, 1.8rem); 
                 font-weight: 600;
                 letter-spacing: 2px; text-align: center; padding: 0 15px;
                 text-shadow: 0px 3px 10px rgba(0,0,0,0.8);
@@ -202,8 +204,8 @@ def generate_production_launch_book(pdf_path, audio_src):
         </audio>
 
         <div id="launch-overlay">
-            <!-- New Parliament Building Image -->
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/New_Parliament_Building%2C_New_Delhi.jpg/640px-New_Parliament_Building%2C_New_Delhi.jpg" class="launch-logo" alt="New Parliament Building">
+            <!-- Text instead of Image -->
+            <div class="rs-logo-text">राज्य सभा सचिवालय</div>
             
             <h1 class="launch-title">लोकार्पण</h1>
             <div class="launch-subtitle">नूतन प्रतिबिंब 2026</div>
