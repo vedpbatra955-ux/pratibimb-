@@ -64,7 +64,7 @@ def generate_production_launch_book(pdf_path):
         
     progress_bar.empty()
     
-    # --- HTML: TOUCH RESPONSIVE LAUNCH, MOBILE ENGINE & UNLOCKED AUDIO ---
+    # --- HTML: TOUCH RESPONSIVE LAUNCH, MOBILE ENGINE & NATIVE AUDIO ---
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -154,10 +154,14 @@ def generate_production_launch_book(pdf_path):
         </style>
     </head>
     <body>
+        
+        <!-- NATIVE HTML5 AUDIO ELEMENT (Crash-Proof for Browsers) -->
+        <audio id="bhartiya-sangeet" loop preload="auto" crossorigin="anonymous">
+            <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/7/74/Sitar_and_Tabla.ogg/Sitar_and_Tabla.ogg.mp3" type="audio/mpeg">
+        </audio>
 
         <div id="launch-overlay">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" class="launch-logo" alt="State Emblem of India">
-            
             <h1 class="launch-title">Official Launch</h1>
             <div class="launch-subtitle">Nutan Pratibimb 2026</div>
             <div class="ribbon-container" id="ribbon-box">
@@ -177,30 +181,6 @@ def generate_production_launch_book(pdf_path):
         <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 
-                // --- 1. JAVASCRIPT AUDIO ENGINE (CRASH-PROOF MP3) ---
-                // Using Wikipedia's universal MP3 transcode to ensure it plays on iPhones, iPads, and Safari
-                const sangeet = new Audio("https://upload.wikimedia.org/wikipedia/commons/transcoded/7/74/Sitar_and_Tabla.ogg/Sitar_and_Tabla.ogg.mp3");
-                sangeet.volume = 0.6;
-                sangeet.loop = true;
-                let audioUnlocked = false;
-
-                // The "Unlock Trick": Forces strict browsers to allow audio upon the very first screen tap
-                function unlockAudio() {{
-                    if (!audioUnlocked) {{
-                        sangeet.play().then(() => {{
-                            sangeet.pause();
-                            sangeet.currentTime = 0;
-                            audioUnlocked = true;
-                        }}).catch(e => console.log("Audio unlock waiting for primary interaction..."));
-                        document.removeEventListener('touchstart', unlockAudio);
-                        document.removeEventListener('mousedown', unlockAudio);
-                    }}
-                }}
-                document.addEventListener('touchstart', unlockAudio);
-                document.addEventListener('mousedown', unlockAudio);
-
-
-                // --- 2. MOBILE RESPONSIVE 3D ENGINE ---
                 setTimeout(() => {{
                     const ratio = {ratio}; 
                     let screenW = window.innerWidth * 0.95;
@@ -235,7 +215,6 @@ def generate_production_launch_book(pdf_path):
                     }});
                 }}, 300);
 
-                // --- 3. TOUCH & MOUSE RIBBON CUTTING ---
                 const ribbonBox = document.getElementById('ribbon-box');
                 const scissors = document.getElementById('scissors');
                 const overlay = document.getElementById('launch-overlay');
@@ -264,8 +243,15 @@ def generate_production_launch_book(pdf_path):
                     if(isCut) return;
                     isCut = true;
                     
-                    // Trigger the unlocked Indian Classical Music
-                    sangeet.play().catch(e => console.log("Final playback blocked by strict browser policy: ", e));
+                    // --- TRIGGER THE NATIVE HTML AUDIO ---
+                    const sangeet = document.getElementById('bhartiya-sangeet');
+                    sangeet.volume = 0.6;
+                    let playPromise = sangeet.play();
+                    if (playPromise !== undefined) {{
+                        playPromise.catch(error => {{
+                            console.log("Audio playback prevented by strict browser policies: ", error);
+                        }});
+                    }}
                     
                     scissors.classList.add('snip');
                     
@@ -320,10 +306,3 @@ if not st.session_state.reader_active:
 
 else:
     components.html(st.session_state.html_content, width=None, height=900, scrolling=False)
-    
-    col1, col2, col3 = st.columns([2, 1, 2])
-    with col2:
-        if st.button("❌ End Session", use_container_width=True):
-            st.session_state.reader_active = False
-            st.session_state.html_content = ""
-            st.rerun()
