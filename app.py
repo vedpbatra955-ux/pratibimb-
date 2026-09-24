@@ -26,11 +26,13 @@ if 'reader_active' not in st.session_state:
     st.session_state.reader_active = False
 if 'html_content' not in st.session_state:
     st.session_state.html_content = ""
+if 'offline_html' not in st.session_state:
+    st.session_state.offline_html = None
 
 # --- AUDIO FETCH ENGINE ---
 @st.cache_data
 def fetch_sangeet_audio():
-    # 1. सबसे पहले चेक करें कि क्या यूज़र ने अपना 'sangeet.mp3' गिटहब पर अपलोड किया है
+    # 1. Check for local 'sangeet.mp3' first
     local_audio_path = "sangeet.mp3"
     if os.path.exists(local_audio_path):
         try:
@@ -40,7 +42,7 @@ def fetch_sangeet_audio():
         except Exception as e:
             print(f"लोकल ऑडियो पढ़ने में त्रुटि: {e}")
             
-    # 2. बैकअप ऑडियो
+    # 2. Fallback Audio
     audio_url = "https://upload.wikimedia.org/wikipedia/commons/transcoded/7/74/Sitar_and_Tabla.ogg/Sitar_and_Tabla.ogg.mp3"
     try:
         headers = {'User-Agent': 'Mozilla/5.0'}
@@ -101,6 +103,7 @@ def generate_production_launch_book(pdf_path, audio_src):
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+        <title>नूतन प्रतिबिंब 2026 - राज्य सभा सचिवालय</title>
         <style>
             body {{
                 background: linear-gradient(135deg, #1f1f1f 0%, #0a0a0a 100%);
@@ -166,7 +169,7 @@ def generate_production_launch_book(pdf_path, audio_src):
                 cursor: none; 
             }}
             
-            /* --- GOLDEN RIB ক্রিম (RIBBON) --- */
+            /* --- GOLDEN RIBBON --- */
             .ribbon-half {{
                 width: 50%; height: 80px;
                 background: linear-gradient(to bottom, #fceabb, #f8b500, #b27300);
@@ -204,9 +207,7 @@ def generate_production_launch_book(pdf_path, audio_src):
         </audio>
 
         <div id="launch-overlay">
-            <!-- Text instead of Image -->
             <div class="rs-logo-text">राज्य सभा सचिवालय</div>
-            
             <h1 class="launch-title">लोकार्पण</h1>
             <div class="launch-subtitle">नूतन प्रतिबिंब 2026</div>
             <div class="ribbon-container" id="ribbon-box">
@@ -333,8 +334,9 @@ if not st.session_state.reader_active:
     st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #888;'>नूतन प्रतिबिंब 2026 का आधिकारिक लोकार्पण</p><br>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("🚀 INITIATE LAUNCH SEQUENCE", type="primary", use_container_width=True):
+    
+    with col1:
+        if st.button("🚀 INITIATE ONLINE LAUNCH", type="primary", use_container_width=True):
             with st.spinner("लॉन्च स्क्रीन तैयार की जा रही है और संगीत लोड हो रहा है..."):
                 try:
                     audio_source = fetch_sangeet_audio()
@@ -342,7 +344,31 @@ if not st.session_state.reader_active:
                     st.session_state.reader_active = True
                     st.rerun()
                 except Exception as e:
-                    st.error(f"दस्तावेज़ लोड करने में विफल। सुनिश्चित करें कि 'NUTAN PRATIBIMB 2026.pdf' गिटहब (GitHub) फ़ोल्डर में मौजूद है। त्रुटि: {e}")
+                    st.error(f"दस्तावेज़ लोड करने में विफल। त्रुटि: {e}")
+                    
+    with col3:
+        if st.button("⚙️ GENERATE OFFLINE E-BOOK", use_container_width=True):
+            with st.spinner("ऑफ़लाइन फ़ाइल बनाई जा रही है (कृपया प्रतीक्षा करें)..."):
+                try:
+                    audio_source = fetch_sangeet_audio()
+                    st.session_state.offline_html = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source)
+                    st.success("✅ ऑफ़लाइन ई-बुक तैयार है! नीचे दिए गए बटन से डाउनलोड करें।")
+                except Exception as e:
+                    st.error(f"दस्तावेज़ लोड करने में विफल। त्रुटि: {e}")
+
+    # Show Download Button once generated
+    if st.session_state.offline_html:
+        st.write("---")
+        col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
+        with col_dl2:
+            st.download_button(
+                label="💾 DOWNLOAD NUTAN PRATIBIMB (.html)",
+                data=st.session_state.offline_html,
+                file_name="Nutan_Pratibimb_2026_Virtual_Launch.html",
+                mime="text/html",
+                type="primary",
+                use_container_width=True
+            )
 
 else:
     components.html(st.session_state.html_content, width=None, height=900, scrolling=False)
