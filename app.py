@@ -30,7 +30,7 @@ if 'html_content' not in st.session_state:
 # --- AUDIO FETCH ENGINE ---
 @st.cache_data
 def fetch_sangeet_audio():
-    # 1. सबसे पहले चेक करें कि क्या यूज़र ने अपना 'sangeet.mp3' (शहनाई/तबला) गिटहब पर अपलोड किया है
+    # 1. सबसे पहले चेक करें कि क्या यूज़र ने अपना 'sangeet.mp3' गिटहब पर अपलोड किया है
     local_audio_path = "sangeet.mp3"
     if os.path.exists(local_audio_path):
         try:
@@ -40,7 +40,7 @@ def fetch_sangeet_audio():
         except Exception as e:
             print(f"लोकल ऑडियो पढ़ने में त्रुटि: {e}")
             
-    # 2. अगर 'sangeet.mp3' नहीं मिलता है, तो यह बैकअप के तौर पर पुरानी धुन बजाएगा
+    # 2. बैकअप ऑडियो
     audio_url = "https://upload.wikimedia.org/wikipedia/commons/transcoded/7/74/Sitar_and_Tabla.ogg/Sitar_and_Tabla.ogg.mp3"
     try:
         headers = {'User-Agent': 'Mozilla/5.0'}
@@ -133,19 +133,29 @@ def generate_production_launch_book(pdf_path, audio_src):
                 justify-content: center; align-items: center;
                 transition: opacity 1.5s ease-in-out;
             }}
+            
+            /* --- NEW PARLIAMENT IMAGE --- */
             .launch-logo {{
-                width: 120px; margin-bottom: 20px;
-                filter: drop-shadow(0px 4px 10px rgba(212, 175, 55, 0.4));
+                width: 280px; 
+                margin-bottom: 25px;
+                border-radius: 12px;
+                border: 3px solid #d4af37; /* Golden border to frame the building */
+                box-shadow: 0px 10px 30px rgba(0,0,0,0.6);
             }}
+            
+            /* --- HUGE TITLE FONT --- */
             .launch-title {{
-                color: #d4af37; font-size: clamp(2rem, 5vw, 3.5rem);
-                text-transform: uppercase; letter-spacing: 4px;
+                color: #d4af37; 
+                font-size: clamp(3.5rem, 8vw, 5.5rem); /* Massively increased size */
+                font-weight: 800;
+                letter-spacing: 4px;
                 margin-bottom: 10px; text-align: center;
-                text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.4); margin-top: 0;
+                text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.5); margin-top: 0;
             }}
             .launch-subtitle {{
-                color: #ffffff; font-size: clamp(1rem, 3vw, 1.5rem);
+                color: #ffffff; font-size: clamp(1.2rem, 4vw, 1.8rem);
                 margin-bottom: 40px; text-align: center; font-weight: 300;
+                letter-spacing: 2px;
             }}
             
             .ribbon-container {{
@@ -174,22 +184,28 @@ def generate_production_launch_book(pdf_path, audio_src):
             .cut-left {{ transform: translateX(-100vw); }}
             .cut-right {{ transform: translateX(100vw); }}
             
+            /* --- GOLDEN & LARGE FOOTER --- */
             .launch-footer {{
-                position: absolute; bottom: 30px; color: #e0e0e0;
-                font-size: clamp(0.8rem, 2vw, 1.2rem); letter-spacing: 2px; text-align: center; padding: 0 10px;
+                position: absolute; bottom: 40px; 
+                color: #FFD700; /* Bright Golden Color */
+                font-size: clamp(1.2rem, 3.5vw, 1.8rem); /* Increased size */
+                font-weight: 600;
+                letter-spacing: 2px; text-align: center; padding: 0 15px;
+                text-shadow: 0px 3px 10px rgba(0,0,0,0.8);
             }}
         </style>
     </head>
     <body>
         
-        <!-- AUDIO ELEMENT (Plays User's MP3 or Fallback) -->
         <audio id="bhartiya-sangeet" loop preload="auto">
             <source src="{audio_src}" type="audio/mpeg">
         </audio>
 
         <div id="launch-overlay">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" class="launch-logo" alt="State Emblem of India">
-            <h1 class="launch-title">आधिकारिक लॉन्च</h1>
+            <!-- New Parliament Building Image -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/New_Parliament_Building%2C_New_Delhi.jpg/640px-New_Parliament_Building%2C_New_Delhi.jpg" class="launch-logo" alt="New Parliament Building">
+            
+            <h1 class="launch-title">लोकार्पण</h1>
             <div class="launch-subtitle">नूतन प्रतिबिंब 2026</div>
             <div class="ribbon-container" id="ribbon-box">
                 <div class="ribbon-half ribbon-left" id="r-left"></div>
@@ -208,7 +224,6 @@ def generate_production_launch_book(pdf_path, audio_src):
         <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 
-                // 1. MOBILE RESPONSIVE ENGINE
                 setTimeout(() => {{
                     const ratio = {ratio}; 
                     let screenW = window.innerWidth * 0.95;
@@ -243,7 +258,6 @@ def generate_production_launch_book(pdf_path, audio_src):
                     }});
                 }}, 300);
 
-                // 2. TOUCH & MOUSE RIBBON CUTTING
                 const ribbonBox = document.getElementById('ribbon-box');
                 const scissors = document.getElementById('scissors');
                 const overlay = document.getElementById('launch-overlay');
@@ -272,7 +286,6 @@ def generate_production_launch_book(pdf_path, audio_src):
                     if(isCut) return;
                     isCut = true;
                     
-                    // --- TRIGGER THE AUDIO SYNCHRONOUSLY ---
                     const sangeet = document.getElementById('bhartiya-sangeet');
                     sangeet.volume = 0.6;
                     sangeet.play().catch(err => console.error("Audio playback error:", err));
@@ -303,7 +316,6 @@ def generate_production_launch_book(pdf_path, audio_src):
                     }}, 1500);
                 }}
 
-                // Bind to explicit user gestures
                 ribbonBox.addEventListener('click', cutRibbon);
                 ribbonBox.addEventListener('touchend', cutRibbon);
             }});
@@ -323,9 +335,7 @@ if not st.session_state.reader_active:
         if st.button("🚀 INITIATE LAUNCH SEQUENCE", type="primary", use_container_width=True):
             with st.spinner("लॉन्च स्क्रीन तैयार की जा रही है और संगीत लोड हो रहा है..."):
                 try:
-                    # 1. Fetch the audio first (checks for local sangeet.mp3)
                     audio_source = fetch_sangeet_audio()
-                    # 2. Inject it into the book
                     st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf", audio_source)
                     st.session_state.reader_active = True
                     st.rerun()
