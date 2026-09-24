@@ -2,7 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pymupdf
 import base64
-import requests
+import os
 
 # --- 1. Cross-Device Screen Optimization ---
 st.set_page_config(page_title="Official Magazine Launch", layout="wide", initial_sidebar_state="collapsed")
@@ -26,14 +26,13 @@ if 'reader_active' not in st.session_state:
 if 'html_content' not in st.session_state:
     st.session_state.html_content = ""
 
-def generate_production_launch_book(pdf_bytes):
-    # Open the PDF directly from the downloaded byte stream
-    doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+def generate_production_launch_book(pdf_path):
+    # Open the PDF directly from the GitHub server folder
+    doc = pymupdf.open(pdf_path)
     total_pages = len(doc)
     page0 = doc.load_page(0)
     ratio = page0.rect.height / page0.rect.width
     
-    # Smart Memory Compression based on page count
     if total_pages > 100:
         mat = pymupdf.Matrix(0.9, 0.9)
         jpg_qual = 55
@@ -45,7 +44,7 @@ def generate_production_launch_book(pdf_bytes):
         jpg_qual = 80
         
     images_html = ""
-    progress_bar = st.progress(0, text=f"Rendering {total_pages} pages for virtual launch...")
+    progress_bar = st.progress(0, text=f"Preparing secure launch environment for {total_pages} pages...")
     
     for page_num in range(total_pages):
         page = doc.load_page(page_num)
@@ -171,7 +170,6 @@ def generate_production_launch_book(pdf_bytes):
         <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 
-                // --- 1. MOBILE RESPONSIVE ENGINE ---
                 setTimeout(() => {{
                     const ratio = {ratio}; 
                     let screenW = window.innerWidth * 0.95;
@@ -206,7 +204,6 @@ def generate_production_launch_book(pdf_bytes):
                     }});
                 }}, 300);
 
-                // --- 2. TOUCH & MOUSE RIBBON CUTTING ---
                 const ribbonBox = document.getElementById('ribbon-box');
                 const scissors = document.getElementById('scissors');
                 const overlay = document.getElementById('launch-overlay');
@@ -273,38 +270,19 @@ def generate_production_launch_book(pdf_bytes):
 # --- Main Interface ---
 if not st.session_state.reader_active:
     st.markdown("<br><br><br><h1 style='text-align: center; font-size: clamp(2rem, 4vw, 3.5rem);'>🏛️ Virtual Inauguration Platform</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #888;'>Paste a direct PDF link below to prepare the launch environment.</p><br>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #888;'>Official Launch of Nutan Pratibimb 2026</p><br>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        # Replaced the file uploader with a URL text input
-        pdf_url = st.text_input("Direct PDF URL", placeholder="https://example.com/document.pdf")
-
-        if pdf_url:
-            st.write("---")
-            if st.button("🚀 INITIATE LAUNCH SEQUENCE", type="primary", use_container_width=True):
-                with st.spinner("Downloading document from URL..."):
-                    try:
-                        # Fetch the PDF directly from the web
-                        response = requests.get(pdf_url, timeout=15)
-                        response.raise_for_status() # Check for HTTP errors like 404
-                        pdf_bytes = response.content
-                        
-                        st.session_state.html_content = generate_production_launch_book(pdf_bytes)
-                        st.session_state.reader_active = True
-                        st.rerun()
-                    except requests.exceptions.RequestException as e:
-                        st.error(f"Network error while downloading the PDF: {e}")
-                    except Exception as e:
-                        st.error(f"Failed to process the document: {e}")
+        if st.button("🚀 INITIATE LAUNCH SEQUENCE", type="primary", use_container_width=True):
+            with st.spinner("Preparing official launch environment..."):
+                try:
+                    # Hardcoded to read the PDF directly from your GitHub repository folder
+                    st.session_state.html_content = generate_production_launch_book("NUTAN PRATIBIMB 2026.pdf")
+                    st.session_state.reader_active = True
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to load document. Make sure 'NUTAN PRATIBIMB 2026.pdf' is in the GitHub folder. Error: {e}")
 
 else:
-    # Render the full-screen iframe across any device
     components.html(st.session_state.html_content, width=None, height=900, scrolling=False)
-    
-    col1, col2, col3 = st.columns([2, 1, 2])
-    with col2:
-        if st.button("❌ End Session", use_container_width=True):
-            st.session_state.reader_active = False
-            st.session_state.html_content = ""
-            st.rerun()
