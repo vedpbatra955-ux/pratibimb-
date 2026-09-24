@@ -6,7 +6,7 @@ import requests
 import os
 
 # --- 1. Cross-Device Screen Optimization ---
-st.set_page_config(page_title="Official Magazine Launch", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="नूतन प्रतिबिंब 2026 लॉन्च", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
@@ -62,7 +62,7 @@ def generate_production_launch_book(pdf_path, audio_src):
         jpg_qual = 80
         
     images_html = ""
-    progress_bar = st.progress(0, text=f"Rendering {total_pages} pages for virtual inauguration...")
+    progress_bar = st.progress(0, text=f"{total_pages} पृष्ठों को लोड किया जा रहा है...")
     
     for page_num in range(total_pages):
         page = doc.load_page(page_num)
@@ -116,10 +116,11 @@ def generate_production_launch_book(pdf_path, audio_src):
             .page-cover {{ background-color: #111; border: 1px solid #333; }}
             .page-cover::after {{ display: none; }}
 
-            /* --- LAUNCH STAGE --- */
+            /* --- LAUNCH STAGE WITH RAJYA SABHA MAROON BACKGROUND --- */
             #launch-overlay {{
                 position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+                /* Official Maroon Color Gradient */
+                background: radial-gradient(circle, #7e191b 0%, #3a0809 100%); 
                 z-index: 9999; display: flex; flex-direction: column;
                 justify-content: center; align-items: center;
                 transition: opacity 1.5s ease-in-out;
@@ -145,15 +146,17 @@ def generate_production_launch_book(pdf_path, audio_src):
                 cursor: none; 
             }}
             
+            /* --- GOLDEN RIBBON --- */
             .ribbon-half {{
                 width: 50%; height: 80px;
-                background: linear-gradient(to bottom, #d32f2f, #9a0007);
+                /* Premium Golden Gradient */
+                background: linear-gradient(to bottom, #fceabb, #f8b500, #b27300);
                 box-shadow: 0 10px 20px rgba(0,0,0,0.5);
                 transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
                 display: flex; align-items: center;
             }}
-            .ribbon-left {{ border-right: 3px dashed #ffd700; justify-content: flex-end; }}
-            .ribbon-right {{ border-left: 3px dashed #ffd700; justify-content: flex-start; }}
+            .ribbon-left {{ border-right: 3px dashed #ffffff; justify-content: flex-end; }}
+            .ribbon-right {{ border-left: 3px dashed #ffffff; justify-content: flex-start; }}
             
             #scissors {{
                 position: absolute; font-size: 5rem;
@@ -165,7 +168,7 @@ def generate_production_launch_book(pdf_path, audio_src):
             .cut-right {{ transform: translateX(100vw); }}
             
             .launch-footer {{
-                position: absolute; bottom: 30px; color: #888;
+                position: absolute; bottom: 30px; color: #e0e0e0;
                 font-size: clamp(0.8rem, 2vw, 1.2rem); letter-spacing: 2px; text-align: center; padding: 0 10px;
             }}
         </style>
@@ -179,14 +182,14 @@ def generate_production_launch_book(pdf_path, audio_src):
 
         <div id="launch-overlay">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" class="launch-logo" alt="State Emblem of India">
-            <h1 class="launch-title">Official Launch</h1>
-            <div class="launch-subtitle">Nutan Pratibimb 2026</div>
+            <h1 class="launch-title">आधिकारिक लॉन्च</h1>
+            <div class="launch-subtitle">नूतन प्रतिबिंब 2026</div>
             <div class="ribbon-container" id="ribbon-box">
                 <div class="ribbon-half ribbon-left" id="r-left"></div>
                 <div class="ribbon-half ribbon-right" id="r-right"></div>
                 <div id="scissors">✂️</div>
             </div>
-            <div class="launch-footer">Inaugurated by Shri P.C. Mody, Secretary-General, Rajya Sabha</div>
+            <div class="launch-footer">महासचिव, राज्य सभा द्वारा नूतन प्रतिबिंब का लोकार्पण, 28 सितंबर, 2026</div>
         </div>
 
         <div id="book-wrapper">
@@ -263,7 +266,6 @@ def generate_production_launch_book(pdf_path, audio_src):
                     isCut = true;
                     
                     // --- TRIGGER THE AUDIO SYNCHRONOUSLY ---
-                    // By executing this instantly upon the click gesture, browsers guarantee playback
                     const sangeet = document.getElementById('bhartiya-sangeet');
                     sangeet.volume = 0.6;
                     sangeet.play().catch(err => console.error("Audio playback error:", err));
@@ -306,14 +308,13 @@ def generate_production_launch_book(pdf_path, audio_src):
 
 # --- Main Interface ---
 if not st.session_state.reader_active:
-    # Text updated to Hindi as requested
     st.markdown("<br><br><br><h1 style='text-align: center; font-size: clamp(2rem, 4vw, 3.5rem);'>🏛️ राज्य सभा सचिवालय</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #888;'>नूतन प्रतिबिंब 2026 का आधिकारिक लॉन्च</p><br>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #888;'>नूतन प्रतिबिंब 2026 का आधिकारिक लोकार्पण</p><br>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🚀 INITIATE LAUNCH SEQUENCE", type="primary", use_container_width=True):
-            with st.spinner("Preparing official launch environment and downloading Sangeet..."):
+            with st.spinner("लॉन्च स्क्रीन तैयार की जा रही है और संगीत डाउनलोड हो रहा है..."):
                 try:
                     # 1. Fetch the audio first
                     audio_source = fetch_sangeet_audio()
@@ -322,7 +323,7 @@ if not st.session_state.reader_active:
                     st.session_state.reader_active = True
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Failed to load document. Make sure 'NUTAN PRATIBIMB 2026.pdf' is in the GitHub folder. Error: {e}")
+                    st.error(f"दस्तावेज़ लोड करने में विफल। सुनिश्चित करें कि 'NUTAN PRATIBIMB 2026.pdf' गिटहब (GitHub) फ़ोल्डर में मौजूद है। त्रुटि: {e}")
 
 else:
     components.html(st.session_state.html_content, width=None, height=900, scrolling=False)
