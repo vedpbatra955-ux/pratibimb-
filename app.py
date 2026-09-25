@@ -71,8 +71,11 @@ def generate_production_launch_book(pdf_path, audio_src, logo_src):
     doc = pymupdf.open(pdf_path)
     total_pages = len(doc)
     
+    # --- FIX: Calculate aspect ratio (यह लाइन पहले छूट गई थी) ---
+    page0 = doc.load_page(0)
+    ratio = page0.rect.height / page0.rect.width
+    
     # --- HIGH DEFINITION (HD) RENDER OVERRIDE ---
-    # हमने कम्प्रेशन हटा दिया है। 2.0x ज़ूम और 90% क्वालिटी से टेक्स्ट बिल्कुल स्पष्ट दिखेगा।
     mat = pymupdf.Matrix(2.0, 2.0) 
     jpg_qual = 90
         
