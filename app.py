@@ -8,15 +8,18 @@ import os
 # --- 1. Cross-Device Screen Optimization ---
 st.set_page_config(page_title="नूतन प्रतिबिंब 2026 लॉन्च", layout="wide", initial_sidebar_state="collapsed")
 
+# --- GLOBAL CSS FIX (Removes empty spaces at bottom) ---
 st.markdown("""
     <style>
-        #MainMenu {visibility: hidden;}
-        header {visibility: hidden;}
-        footer {visibility: hidden;}
+        /* Changed visibility:hidden to display:none to completely remove the space */
+        #MainMenu {display: none !important;}
+        header {display: none !important;}
+        footer {display: none !important;}
         .block-container {
             padding: 0rem !important; 
             max-width: 100% !important; 
             width: 100% !important;
+            padding-bottom: 0rem !important;
         }
         iframe { border: none; }
     </style>
@@ -55,7 +58,6 @@ def fetch_sangeet_audio():
 
 @st.cache_data
 def fetch_logo_image():
-    # Reads the local PNG logo image
     local_logo_path = "rs_text.png"
     if os.path.exists(local_logo_path):
         try:
@@ -104,11 +106,9 @@ def generate_production_launch_book(pdf_path, audio_src, logo_src):
         
     progress_bar.empty()
     
-    # Fallback default emblem just in case the PNG is missing
     fallback_img = "https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
     actual_img_src = logo_src if logo_src else fallback_img
     
-    # --- HTML: PURE EMBEDDED ASSETS & DYNAMIC LAYOUT ---
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -142,7 +142,6 @@ def generate_production_launch_book(pdf_path, audio_src, logo_src):
             .page-cover {{ background-color: #111; border: 1px solid #333; }}
             .page-cover::after {{ display: none; }}
 
-            /* --- FIXED RESPONSIVE LAYOUT (No more overlapping) --- */
             #launch-overlay {{
                 position: absolute; top: 0; left: 0; width: 100%; height: 100%;
                 background: radial-gradient(circle, #7e191b 0%, #3a0809 100%); 
@@ -152,20 +151,15 @@ def generate_production_launch_book(pdf_path, audio_src, logo_src):
                 padding: 10px; box-sizing: border-box;
             }}
             
-            /* --- LOGO SIZING FIX --- */
             .launch-logo {{
-                max-width: 90vw;
-                max-height: 22vh; /* Prevents image from becoming huge on fallback */
-                width: auto; height: auto;
-                margin-bottom: 2vh;
+                max-width: 90vw; max-height: 22vh;
+                width: auto; height: auto; margin-bottom: 2vh;
                 filter: drop-shadow(0px 4px 15px rgba(212, 175, 55, 0.4));
             }}
             
             .launch-title {{
-                color: #d4af37; 
-                font-size: clamp(3rem, 7vw, 5rem);
-                font-weight: 800;
-                letter-spacing: 4px;
+                color: #d4af37; font-size: clamp(3rem, 7vw, 5rem);
+                font-weight: 800; letter-spacing: 4px;
                 margin-bottom: 1vh; text-align: center;
                 text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.5); margin-top: 0;
             }}
@@ -200,26 +194,21 @@ def generate_production_launch_book(pdf_path, audio_src, logo_src):
             .cut-left {{ transform: translateX(-100vw); }}
             .cut-right {{ transform: translateX(100vw); }}
             
-            /* --- FOOTER POSITION FIX --- */
             .launch-footer {{
-                position: relative; /* Now part of the flow, will never overlap */
-                color: #FFD700; 
+                position: relative; color: #FFD700; 
                 font-size: clamp(1rem, 2.5vw, 1.5rem); 
-                font-weight: 600;
-                letter-spacing: 2px; text-align: center; padding: 0 15px;
+                font-weight: 600; letter-spacing: 2px; text-align: center; padding: 0 15px;
                 text-shadow: 0px 3px 10px rgba(0,0,0,0.8);
             }}
         </style>
     </head>
     <body>
-        
         <audio id="bhartiya-sangeet" loop preload="auto">
             <source src="{audio_src}" type="audio/mpeg">
         </audio>
 
         <div id="launch-overlay">
             <img src="{actual_img_src}" class="launch-logo" alt="RS Logo">
-            
             <h1 class="launch-title">लोकार्पण</h1>
             <div class="launch-subtitle">नूतन प्रतिबिंब 2026</div>
             <div class="ribbon-container" id="ribbon-box">
@@ -238,7 +227,6 @@ def generate_production_launch_book(pdf_path, audio_src, logo_src):
         
         <script>
             document.addEventListener('DOMContentLoaded', function() {{
-                
                 setTimeout(() => {{
                     const ratio = {ratio}; 
                     let screenW = window.innerWidth * 0.95;
@@ -384,8 +372,19 @@ if not st.session_state.reader_active:
             )
 
 else:
-    components.html(st.session_state.html_content, width=None, height=900, scrolling=False)
+    # MAGIC FIX: Forcing the entire Streamlit background to pitch black when reader is active
+    st.markdown("""
+        <style>
+            .stApp, [data-testid="stAppViewContainer"] { 
+                background-color: #0a0a0a !important; 
+            }
+        </style>
+    """, unsafe_allow_html=True)
     
+    # Increased height to 1000px to push Streamlit boundaries down
+    components.html(st.session_state.html_content, width=None, height=1000, scrolling=False)
+    
+    st.write("") # Small buffer
     col1, col2, col3 = st.columns([2, 1, 2])
     with col2:
         if st.button("❌ End Session", use_container_width=True):
